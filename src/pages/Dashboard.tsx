@@ -12,11 +12,16 @@ const Dashboard = () => {
   const navigate = useNavigate();
 
   // Fetch runs from API with React Query
-  const { data: runs, isLoading, error } = useQuery<RunListItem[]>({
+  const { data: runsData, isLoading, error } = useQuery({
     queryKey: ["runs"],
     queryFn: () => listRuns(undefined, 20),
     refetchInterval: 30000, // Refresh every 30s
   });
+
+  // Extract runs array from paginated response
+  const runs: RunListItem[] = Array.isArray(runsData) 
+    ? runsData 
+    : ((runsData as any)?.items || []);
 
   // Calculate aggregate metrics from runs
   const latestRun = runs?.[0];
