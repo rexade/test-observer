@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, XCircle, ArrowLeft, GitBranch, Shield, Clock, ExternalLink } from "lucide-react";
 import { getRun, getDecisions } from "@/lib/mirrorClient";
-import { pct, formatTimeAgo, statusFromCoverage } from "@/lib/mirrorUi";
+import { pct, formatTimeAgo, statusFromCoverage, runStatus, REQ_THRESHOLD, TMP_THRESHOLD, testsPassed } from "@/lib/status";
 import type { RunDetail as RunDetailType, Decision } from "@/types/mirror";
 import DecisionsTable from "@/components/DecisionsTable";
 import ManifestSummary from "@/components/ManifestSummary";
@@ -67,7 +67,8 @@ const RunDetail = () => {
     );
   }
 
-  const status = statusFromCoverage(run.coverage);
+  const okTests = runStatus({ ...run.run, coverage: run.coverage, decisions }) === "passed";
+  const gateOK = statusFromCoverage(run.coverage);
 
   return (
     <div className="min-h-screen bg-background py-8">
@@ -80,12 +81,12 @@ const RunDetail = () => {
         {/* Run Header */}
         <div className="mb-8">
           <div className="flex items-center gap-4 mb-2">
-            {status === "passed" ? (
+            {okTests ? (
               <CheckCircle2 className="h-10 w-10 text-success" />
             ) : (
               <XCircle className="h-10 w-10 text-destructive" />
             )}
-            <div>
+            <div className="flex-1">
               <h1 className="text-4xl font-bold">{run.run.project}</h1>
               <div className="flex items-center gap-3 mt-2 text-muted-foreground flex-wrap">
                 <div className="flex items-center gap-2">
@@ -113,6 +114,18 @@ const RunDetail = () => {
                     <span>View in {run.run.ci.provider || 'CI'}</span>
                   </a>
                 )}
+              </div>
+              <div className="flex items-center gap-2 mt-3 flex-wrap">
+                <Badge className={okTests ? "bg-success text-white" : "bg-destructive text-white"}>
+                  {okTests ? "✓ Tests Passed" : "✗ Tests Failed"}
+                </Badge>
+                <Badge className={gateOK ? "bg-success text-white" : "bg-amber-500 text-white"}>
+                  {gateOK ? "✓ Coverage Gate OK" : `⚠ Coverage Below (Req≥${Math.round(REQ_THRESHOLD * 100)}% · Tmp≥${Math.round(TMP_THRESHOLD * 100)}%)`}
+                </Badge>
+                <Badge variant="outline">
+                  Interface {pct(run.coverage.interface)}
+                </Badge>
+                <Shield className="h-5 w-5 text-primary" />
               </div>
             </div>
           </div>

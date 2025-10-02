@@ -5,7 +5,8 @@ import { CheckCircle2, XCircle, Clock, TrendingUp, GitBranch, Shield, AlertCircl
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import type { RunListItem } from "@/types/mirror";
-import { pct, formatTimeAgo, statusFromCoverage } from "@/lib/mirrorUi";
+import { pct, formatTimeAgo } from "@/lib/status";
+import { testsPassed, statusFromCoverage, runStatus, REQ_THRESHOLD, TMP_THRESHOLD } from "@/lib/status";
 import { listRuns } from "@/lib/mirrorClient";
 
 const Dashboard = () => {
@@ -32,7 +33,8 @@ const Dashboard = () => {
     ? runs.reduce((sum, r) => sum + r.coverage.temporal, 0) / runs.length
     : 0;
   const totalRuns = runs?.length || 0;
-  const passedRuns = runs?.filter(r => statusFromCoverage(r.coverage) === "passed").length || 0;
+  const passedRuns = runs?.filter(r => testsPassed(r)).length || 0;
+  const gatePassedRuns = runs?.filter(r => statusFromCoverage(r.coverage)).length || 0;
 
   return (
     <div className="min-h-screen bg-background py-8">
@@ -78,7 +80,7 @@ const Dashboard = () => {
 
           <Card className="shadow-card">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Pass Rate</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground">Test Pass Rate</CardTitle>
             </CardHeader>
             <CardContent>
               {isLoading ? (
@@ -87,6 +89,22 @@ const Dashboard = () => {
                 <>
                   <div className="text-3xl font-bold">{totalRuns > 0 ? pct(passedRuns / totalRuns) : "—"}</div>
                   <p className="text-xs text-muted-foreground mt-1">{passedRuns} of {totalRuns} passed</p>
+                </>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-card">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Coverage Gate</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isLoading ? (
+                <div className="h-10 bg-muted animate-pulse rounded" />
+              ) : (
+                <>
+                  <div className="text-3xl font-bold text-primary">{totalRuns > 0 ? pct(gatePassedRuns / totalRuns) : "—"}</div>
+                  <p className="text-xs text-muted-foreground mt-1">Req≥{Math.round(REQ_THRESHOLD * 100)}%, Tmp≥{Math.round(TMP_THRESHOLD * 100)}%</p>
                 </>
               )}
             </CardContent>
@@ -140,7 +158,8 @@ const Dashboard = () => {
             ) : (
               <div className="space-y-4">
                 {runs.map((run) => {
-                  const status = statusFromCoverage(run.coverage);
+                  const okTests = runStatus(run) === "passed";
+                  const gateOK = statusFromCoverage(run.coverage);
                   return (
                     <div
                       key={run.run_id}
@@ -148,7 +167,7 @@ const Dashboard = () => {
                       className="flex items-center justify-between p-4 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer"
                     >
                       <div className="flex items-center gap-4">
-                        {status === "passed" ? (
+                        {okTests ? (
                           <CheckCircle2 className="h-8 w-8 text-success" />
                         ) : (
                           <XCircle className="h-8 w-8 text-destructive" />
@@ -171,6 +190,12 @@ const Dashboard = () => {
                           <p className="text-2xl font-bold">{pct(run.coverage.temporal)}</p>
                           <p className="text-xs text-muted-foreground">Temporal</p>
                         </div>
+                        <Badge 
+                          variant={gateOK ? "default" : "secondary"}
+                          className={gateOK ? "bg-success text-white" : "bg-amber-500 text-white"}
+                        >
+                          {gateOK ? "Gate OK" : "Coverage Low"}
+                        </Badge>
                         <Badge variant="secondary" className="text-xs">
                           Interface {pct(run.coverage.interface)}
                         </Badge>
