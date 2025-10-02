@@ -3,10 +3,12 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, XCircle, ArrowLeft, GitBranch, Shield, Clock, FileCode } from "lucide-react";
+import { CheckCircle2, XCircle, ArrowLeft, GitBranch, Shield, Clock } from "lucide-react";
 import { getRun, getDecisions } from "@/lib/mirrorClient";
 import { pct, formatTimeAgo, statusFromCoverage } from "@/lib/mirrorUi";
 import type { RunDetail as RunDetailType, Decision } from "@/types/mirror";
+import DecisionsTable from "@/components/DecisionsTable";
+import ManifestSummary from "@/components/ManifestSummary";
 
 const RunDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -139,46 +141,13 @@ const RunDetail = () => {
         </div>
 
         {/* Manifest Info */}
-        <Card className="shadow-card mb-8">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileCode className="h-5 w-5" />
-              Run Manifest
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div>
-                <p className="text-sm text-muted-foreground">Events</p>
-                <p className="text-2xl font-bold">{run.manifest.counts.events.toLocaleString()}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Decisions</p>
-                <p className="text-2xl font-bold">{decisions.length}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Artifacts</p>
-                <p className="text-2xl font-bold">{run.manifest.artifacts?.length || 0}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Schema</p>
-                <p className="text-sm font-mono">{run.manifest.schema}</p>
-              </div>
-            </div>
-            {run.manifest.tooling && (
-              <div className="mt-4 pt-4 border-t">
-                <p className="text-sm text-muted-foreground mb-2">Tooling</p>
-                <div className="flex gap-3 flex-wrap">
-                  {Object.entries(run.manifest.tooling).map(([key, val]) => (
-                    <Badge key={key} variant="secondary" className="font-mono">
-                      {key}: {val}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        <div className="mb-8">
+          <ManifestSummary 
+            manifest={run.manifest}
+            counts={run.manifest.counts}
+            tooling={run.manifest.tooling}
+          />
+        </div>
 
         {/* Decisions */}
         <Card className="shadow-card">
@@ -189,50 +158,7 @@ const RunDetail = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {decisions.length === 0 ? (
-              <p className="text-center text-muted-foreground py-8">No decisions recorded</p>
-            ) : (
-              <div className="space-y-4">
-                {decisions.map((decision, idx) => (
-                  <div
-                    key={idx}
-                    className="p-4 rounded-lg border bg-muted/20"
-                  >
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        {decision.result === "pass" ? (
-                          <CheckCircle2 className="h-5 w-5 text-success" />
-                        ) : (
-                          <XCircle className="h-5 w-5 text-destructive" />
-                        )}
-                        <span className="font-mono font-semibold">{decision.oracle}</span>
-                      </div>
-                      <Badge variant={decision.result === "pass" ? "default" : "destructive"}>
-                        {decision.result}
-                      </Badge>
-                    </div>
-                    {decision.message && (
-                      <p className="text-sm text-muted-foreground mb-2">{decision.message}</p>
-                    )}
-                    {decision.satisfies && decision.satisfies.length > 0 && (
-                      <div className="flex gap-2 flex-wrap mb-2">
-                        {decision.satisfies.map((req) => (
-                          <Badge key={req} variant="outline" className="text-xs">
-                            {req}
-                          </Badge>
-                        ))}
-                      </div>
-                    )}
-                    {decision.evidence && decision.evidence.length > 0 && (
-                      <div className="mt-2 text-xs text-muted-foreground">
-                        <span className="font-semibold">Evidence:</span>{" "}
-                        {decision.evidence.join(", ")}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
+            <DecisionsTable decisions={decisions} />
           </CardContent>
         </Card>
       </div>

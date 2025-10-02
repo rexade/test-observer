@@ -1,7 +1,8 @@
 // lib/mirrorClient.ts
 import type { RunListItem, RunDetail, RunMeta, Coverage, Decision } from "@/types/mirror";
 
-const BASE = import.meta.env.VITE_MIRROR_API ?? "http://localhost:3000/api";
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const BASE = `${SUPABASE_URL}/functions/v1`;
 const AUTH = import.meta.env.VITE_MIRROR_TOKEN;
 
 async function j<T>(r: Response): Promise<T> {
@@ -24,11 +25,11 @@ export async function listRuns(project?: string, limit = 20): Promise<RunListIte
 }
 
 export async function getRun(runId: string): Promise<RunDetail> {
-  return j<RunDetail>(await fetch(`${BASE}/runs/${runId}`, { headers: H(), cache: "no-store" }));
+  return j<RunDetail>(await fetch(`${BASE}/run-detail/${runId}`, { headers: H(), cache: "no-store" }));
 }
 
 export async function getDecisions(runId: string): Promise<Decision[]> {
-  return j<Decision[]>(await fetch(`${BASE}/runs/${runId}/decisions`, { headers: H(), cache: "no-store" }));
+  return j<Decision[]>(await fetch(`${BASE}/run-decisions/${runId}`, { headers: H(), cache: "no-store" }));
 }
 
 // For local dev: post a run (same shape as the POST /api/runs)
