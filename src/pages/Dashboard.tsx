@@ -1,43 +1,33 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, XCircle, Clock, TrendingUp, GitBranch, Shield } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { CheckCircle2, XCircle, Clock, TrendingUp, GitBranch, Shield, AlertCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import type { RunListItem } from "@/types/mirror";
 import { pct, formatTimeAgo, statusFromCoverage } from "@/lib/mirrorUi";
+import { listRuns } from "@/lib/mirrorClient";
 
 const Dashboard = () => {
   const navigate = useNavigate();
 
-  // Mock data matching real API structure - sorted by created_at desc
-  const mockRuns: RunListItem[] = [
-    {
-      run_id: "01HXYZ123456",
-      project: "acme/vehicle-fw",
-      branch: "main",
-      commit: "a3f2c1d",
-      created_at: new Date(Date.now() - 2 * 3600_000).toISOString(),
-      ci: { provider: "github_actions", workflow: "tests" },
-      coverage: { requirement: 0.94, temporal: 0.87, interface: 0.92, risk: 0.89 }
-    },
-    {
-      run_id: "01HXYZ123457",
-      project: "acme/vehicle-fw",
-      branch: "feature/ntp",
-      commit: "b7e9f3a",
-      created_at: new Date(Date.now() - 5 * 3600_000).toISOString(),
-      ci: { provider: "github_actions", workflow: "tests" },
-      coverage: { requirement: 0.87, temporal: 0.61, interface: 0.75, risk: 0.83 }
-    },
-    {
-      run_id: "01HXYZ123458",
-      project: "acme/vehicle-fw",
-      branch: "main",
-      commit: "c2d4e5f",
-      created_at: new Date(Date.now() - 24 * 3600_000).toISOString(),
-      ci: { provider: "github_actions", workflow: "tests" },
-      coverage: { requirement: 0.82, temporal: 0.55, interface: 0.68, risk: 0.76 }
-    },
-  ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  // Fetch runs from API with React Query
+  const { data: runs, isLoading, error } = useQuery<RunListItem[]>({
+    queryKey: ["runs"],
+    queryFn: () => listRuns(undefined, 20),
+    refetchInterval: 30000, // Refresh every 30s
+  });
+
+  // Calculate aggregate metrics from runs
+  const latestRun = runs?.[0];
+  const avgRequirement = runs?.length
+    ? runs.reduce((sum, r) => sum + r.coverage.requirement, 0) / runs.length
+    : 0;
+  const avgTemporal = runs?.length
+    ? runs.reduce((sum, r) => sum + r.coverage.temporal, 0) / runs.length
+    : 0;
+  const totalRuns = runs?.length || 0;
+  const passedRuns = runs?.filter(r => statusFromCoverage(r.coverage) === "passed").length || 0;
 
   return (
     <div className="min-h-screen bg-background py-8">
@@ -54,8 +44,14 @@ const Dashboard = () => {
               <CardTitle className="text-sm font-medium text-muted-foreground">Requirement Coverage</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-success">94%</div>
-              <p className="text-xs text-muted-foreground mt-1">+3% from last week</p>
+              {isLoading ? (
+                <div className="h-10 bg-muted animate-pulse rounded" />
+              ) : (
+                <>
+                  <div className="text-3xl font-bold text-success">{pct(latestRun?.coverage.requirement)}</div>
+                  <p className="text-xs text-muted-foreground mt-1">Avg: {pct(avgRequirement)}</p>
+                </>
+              )}
             </CardContent>
           </Card>
 
@@ -64,28 +60,46 @@ const Dashboard = () => {
               <CardTitle className="text-sm font-medium text-muted-foreground">Temporal Coverage</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-primary">87%</div>
-              <p className="text-xs text-muted-foreground mt-1">Cadence checks passing</p>
+              {isLoading ? (
+                <div className="h-10 bg-muted animate-pulse rounded" />
+              ) : (
+                <>
+                  <div className="text-3xl font-bold text-primary">{pct(latestRun?.coverage.temporal)}</div>
+                  <p className="text-xs text-muted-foreground mt-1">Avg: {pct(avgTemporal)}</p>
+                </>
+              )}
             </CardContent>
           </Card>
 
           <Card className="shadow-card">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Active Oracles</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground">Pass Rate</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">142</div>
-              <p className="text-xs text-muted-foreground mt-1">12 added this week</p>
+              {isLoading ? (
+                <div className="h-10 bg-muted animate-pulse rounded" />
+              ) : (
+                <>
+                  <div className="text-3xl font-bold">{totalRuns > 0 ? pct(passedRuns / totalRuns) : "—"}</div>
+                  <p className="text-xs text-muted-foreground mt-1">{passedRuns} of {totalRuns} passed</p>
+                </>
+              )}
             </CardContent>
           </Card>
 
           <Card className="shadow-card">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Signed Runs</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground">Total Runs</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-accent">328</div>
-              <p className="text-xs text-muted-foreground mt-1">All verified ✓</p>
+              {isLoading ? (
+                <div className="h-10 bg-muted animate-pulse rounded" />
+              ) : (
+                <>
+                  <div className="text-3xl font-bold text-accent">{totalRuns}</div>
+                  <p className="text-xs text-muted-foreground mt-1">All signed & verified</p>
+                </>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -99,7 +113,20 @@ const Dashboard = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {mockRuns.length === 0 ? (
+            {error ? (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  Failed to load runs: {error instanceof Error ? error.message : "Unknown error"}
+                </AlertDescription>
+              </Alert>
+            ) : isLoading ? (
+              <div className="space-y-4">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="h-24 bg-muted animate-pulse rounded-lg" />
+                ))}
+              </div>
+            ) : !runs || runs.length === 0 ? (
               <div className="text-center py-12 text-muted-foreground">
                 <Clock className="h-16 w-16 mx-auto mb-4 opacity-20" />
                 <p>No test runs yet</p>
@@ -107,7 +134,7 @@ const Dashboard = () => {
               </div>
             ) : (
               <div className="space-y-4">
-                {mockRuns.map((run) => {
+                {runs.map((run) => {
                   const status = statusFromCoverage(run.coverage);
                   return (
                     <div

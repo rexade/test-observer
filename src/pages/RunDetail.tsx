@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,25 +11,21 @@ import type { RunDetail as RunDetailType, Decision } from "@/types/mirror";
 const RunDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [run, setRun] = useState<RunDetailType | null>(null);
-  const [decisions, setDecisions] = useState<Decision[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!id) return;
-    
-    Promise.all([getRun(id), getDecisions(id)])
-      .then(([runData, decisionsData]) => {
-        setRun(runData);
-        setDecisions(decisionsData);
-        setLoading(false);
-      })
-      .catch((err) => {
-        setError(err.message);
-        setLoading(false);
-      });
-  }, [id]);
+  const { data: run, isLoading: runLoading, error: runError } = useQuery<RunDetailType>({
+    queryKey: ["run", id],
+    queryFn: () => getRun(id!),
+    enabled: !!id,
+  });
+
+  const { data: decisions = [], isLoading: decisionsLoading } = useQuery<Decision[]>({
+    queryKey: ["decisions", id],
+    queryFn: () => getDecisions(id!),
+    enabled: !!id,
+  });
+
+  const loading = runLoading || decisionsLoading;
+  const error = runError;
 
   if (loading) {
     return (
@@ -53,7 +49,9 @@ const RunDetail = () => {
               <div className="text-center">
                 <XCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
                 <h2 className="text-xl font-semibold mb-2">Run Not Found</h2>
-                <p className="text-muted-foreground mb-4">{error || "This run doesn't exist or couldn't be loaded."}</p>
+                <p className="text-muted-foreground mb-4">
+                  {error instanceof Error ? error.message : error || "This run doesn't exist or couldn't be loaded."}
+                </p>
                 <Button onClick={() => navigate("/dashboard")}>
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   Back to Dashboard
