@@ -24,7 +24,7 @@ type Coverage = {
   temporal: number; 
   interface: number; 
   risk: number; 
-  by_requirement?: {id: string; result: "pass" | "fail" | "unknown"}[] 
+  by_requirement?: {id: string; result: "pass" | "fail" | "unknown" | "skip"}[] 
 };
 
 type Decision = { 
@@ -112,6 +112,26 @@ Deno.serve(async (req) => {
       }
 
       console.log('Run upserted:', run.run_id);
+
+      // Insert run_requirements from coverage.by_requirement
+      if (body.coverage?.by_requirement && body.coverage.by_requirement.length > 0) {
+        const requirementsData = body.coverage.by_requirement.map(r => ({
+          run_id: run.id,
+          requirement_id: r.id,
+          status: r.result
+        }));
+
+        const { error: reqError } = await supabase
+          .from('run_requirements')
+          .upsert(requirementsData, { onConflict: 'run_id,requirement_id' });
+
+        if (reqError) {
+          console.error('Run requirements upsert error:', reqError);
+          // Don't throw - this is optional data
+        } else {
+          console.log('Upserted', requirementsData.length, 'requirement verdicts');
+        }
+      }
 
       // Insert or update decisions (idempotent per run+oracle)
       if (body.decisions.length > 0) {

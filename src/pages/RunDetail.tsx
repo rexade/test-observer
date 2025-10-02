@@ -11,6 +11,7 @@ import type { RunDetail as RunDetailType, Decision } from "@/types/mirror";
 import DecisionsTable from "@/components/DecisionsTable";
 import ManifestSummary from "@/components/ManifestSummary";
 import CopyButton from "@/components/CopyButton";
+import ModuleCoverage from "@/components/ModuleCoverage";
 
 const RunDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -191,6 +192,13 @@ const RunDetail = () => {
             tooling={run.manifest.tooling}
           />
         </div>
+
+        {/* Module Coverage */}
+        {run.moduleCoverage && run.moduleCoverage.length > 0 && (
+          <div className="mb-8">
+            <ModuleCoverage modules={run.moduleCoverage} />
+          </div>
+        )}
 
         {/* Decisions */}
         <Card className="shadow-card">

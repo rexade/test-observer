@@ -24,7 +24,8 @@ class InventoryItem:
         assert "T" in self.atdatetime and "Z" in self.atdatetime, "atdatetime must be ISO 8601"
 
 
-@pytest.mark.interface
+@pytest.mark.interface("Inventory")
+@pytest.mark.requirement("S02P01-INV-4.3.4")
 def test_inventory_required_fields():
     """Interface contract: All required fields present"""
     REQUIRED_FIELDS = {"id", "atdatetime", "name", "version"}

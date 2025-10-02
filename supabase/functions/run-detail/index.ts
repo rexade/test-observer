@@ -57,6 +57,12 @@ Deno.serve(async (req) => {
 
     const projectSlug = (data as any).projects?.slug ?? 'unknown';
     
+    // Fetch module coverage from the view
+    const { data: moduleCoverage } = await supabase
+      .from('public_requirements_coverage')
+      .select('*')
+      .eq('run_id', data.run_id);
+    
     const response = {
       run: {
         run_id: data.run_id,
@@ -67,7 +73,8 @@ Deno.serve(async (req) => {
         ci: data.ci
       },
       manifest: data.manifest,
-      coverage: data.coverage
+      coverage: data.coverage,
+      moduleCoverage: moduleCoverage || []
     };
 
     return new Response(

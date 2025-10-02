@@ -57,14 +57,41 @@ def load_coverage(mirror_dir: Path) -> Dict[str, float]:
     coverage_path = mirror_dir / 'coverage.json'
     if coverage_path.exists():
         with open(coverage_path) as f:
-            return json.load(f)
+            data = json.load(f)
+            
+            # Transform requirements dict to by_requirement array
+            by_requirement = []
+            if 'requirements' in data:
+                for req_id, counts in data['requirements'].items():
+                    # Determine status: pass if any passed and no fails, fail if any failed
+                    if counts.get('fail', 0) > 0:
+                        result = 'fail'
+                    elif counts.get('pass', 0) > 0:
+                        result = 'pass'
+                    else:
+                        result = 'unknown'
+                    
+                    by_requirement.append({
+                        'id': req_id,
+                        'result': result
+                    })
+            
+            # Return coverage with by_requirement array
+            return {
+                'requirement': data.get('quadrants', {}).get('requirement', 0.0),
+                'temporal': data.get('quadrants', {}).get('temporal', 0.0),
+                'interface': data.get('quadrants', {}).get('interface', 0.0),
+                'risk': data.get('quadrants', {}).get('risk', 0.0),
+                'by_requirement': by_requirement
+            }
     
     # Return minimal coverage if not found
     return {
         'requirement': 0.0,
         'temporal': 0.0,
         'interface': 0.0,
-        'risk': 0.0
+        'risk': 0.0,
+        'by_requirement': []
     }
 
 
@@ -177,7 +204,10 @@ def main():
     print(f"  Run ID: {payload['run']['run_id']}")
     print(f"  Project: {payload['run']['project']}")
     print(f"  Decisions: {len(payload['decisions'])}")
-    print(f"  Coverage: {payload['coverage']['requirement']:.1%} req, {payload['coverage']['temporal']:.1%} temporal")
+    coverage = payload['coverage']
+    print(f"  Coverage: {coverage['requirement']:.1%} req, {coverage['temporal']:.1%} temporal")
+    if coverage.get('by_requirement'):
+        print(f"  Requirements tracked: {len(coverage['by_requirement'])}")
 
 
 if __name__ == '__main__':

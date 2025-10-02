@@ -45,11 +45,24 @@ export type RunManifest = {
   };
 };
 
+export type ModuleCoverage = {
+  run_id: number;
+  module: string;
+  interface: string;
+  total_reqs: number;
+  covered_reqs: number;
+  covered_weight: number;
+  total_weight: number;
+  coverage: number;
+  risk_weighted: number;
+};
+
 export type RunDetail = {
   run: RunMeta;
   manifest: RunManifest;
   coverage: Coverage;
   decisions: Decision[];
+  moduleCoverage?: ModuleCoverage[];
 };
 
 export type RunCreate = {

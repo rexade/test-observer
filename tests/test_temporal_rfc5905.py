@@ -2,6 +2,8 @@ import time
 import pytest
 
 
+@pytest.mark.temporal
+@pytest.mark.requirement("S02P02-TIME-003")
 def test_sntp_response_under_200ms():
     """Temporal oracle: SNTP-like operation completes within 200ms"""
     start = time.perf_counter()
@@ -14,6 +16,8 @@ def test_sntp_response_under_200ms():
     assert elapsed_ms < 200, f"Operation took {elapsed_ms:.2f}ms, exceeds 200ms threshold"
 
 
+@pytest.mark.temporal
+@pytest.mark.requirement("S02P02-TIME-003")
 def test_database_query_latency():
     """Temporal oracle: database query completes within 100ms"""
     start = time.perf_counter()
@@ -26,6 +30,7 @@ def test_database_query_latency():
 
 
 @pytest.mark.temporal
+@pytest.mark.requirement("S02P02-TIME-3.3")
 def test_api_response_time():
     """Temporal oracle: API responds within 500ms"""
     start = time.perf_counter()
