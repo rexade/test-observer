@@ -1,4 +1,5 @@
 import json
+import os
 
 # Map a few requirement IDs to checks (toy examples)
 REQ_TESTS = {
@@ -9,6 +10,7 @@ REQ_TESTS = {
 def test_requirements_map():
     results = {req: fn() for req, fn in REQ_TESTS.items()}
     # Export a sidecar outcomes file for post-processing (not required)
+    os.makedirs('reports', exist_ok=True)
     with open('reports/requirements.json', 'w') as f:
         json.dump(results, f, indent=2)
     assert all(results.values()), results
