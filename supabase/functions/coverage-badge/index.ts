@@ -72,11 +72,23 @@ Deno.serve(async (req) => {
     const value = `${reqPct}% / ${tmpPct}%`;
     const svg = generateBadgeSvg('coverage', value);
 
+    // Generate simple ETag for caching
+    const etag = `"${projectSlug}-${reqPct}-${tmpPct}"`;
+
+    // Check if client has cached version
+    if (req.headers.get('if-none-match') === etag) {
+      return new Response(null, { 
+        status: 304, 
+        headers: corsHeaders 
+      });
+    }
+
     return new Response(svg, {
       headers: {
         ...corsHeaders,
         'Content-Type': 'image/svg+xml',
-        'Cache-Control': 'public, max-age=60, stale-while-revalidate=300'
+        'Cache-Control': 'public, max-age=60, stale-while-revalidate=300',
+        'ETag': etag
       },
       status: 200
     });

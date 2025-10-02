@@ -11,6 +11,7 @@ export default function Evidence({ items }: EvidenceProps) {
     <div className="flex flex-wrap gap-1">
       {items.map((e, i) => {
         const isUrl = /^https?:\/\//i.test(e);
+        const displayText = isUrl && e.length > 50 ? e.substring(0, 47) + '...' : e;
         return (
           <span key={i} className="text-xs">
             {isUrl ? (
@@ -19,11 +20,14 @@ export default function Evidence({ items }: EvidenceProps) {
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="text-primary hover:underline"
+                title={e}
               >
-                {e}
+                {displayText}
               </a>
             ) : (
-              <span className="text-muted-foreground font-mono">{e}</span>
+              <span className="text-muted-foreground font-mono" title={e}>
+                {displayText}
+              </span>
             )}
             {i < items.length - 1 && <span className="text-muted-foreground">, </span>}
           </span>

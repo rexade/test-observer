@@ -5,6 +5,20 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, idempotency-key',
 };
 
+function assertPayload(p: any): void {
+  if (!p?.run?.run_id || !p?.run?.project) {
+    throw new Error('Invalid payload: run_id and project are required');
+  }
+  if (p.coverage) {
+    for (const k of ['requirement', 'temporal', 'interface', 'risk']) {
+      const v = Number(p.coverage[k]);
+      if (p.coverage[k] !== undefined && (Number.isNaN(v) || v < 0 || v > 1)) {
+        throw new Error(`coverage.${k} must be between 0 and 1`);
+      }
+    }
+  }
+}
+
 type Coverage = { 
   requirement: number; 
   temporal: number; 
@@ -50,6 +64,17 @@ Deno.serve(async (req) => {
   try {
     if (req.method === 'POST') {
       const body = await req.json() as Payload;
+      
+      // Validate payload
+      try {
+        assertPayload(body);
+      } catch (validationError) {
+        return new Response(
+          JSON.stringify({ error: validationError instanceof Error ? validationError.message : 'Invalid payload' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+        );
+      }
+      
       console.log('Received run submission:', body.run.run_id);
 
       // Upsert project
@@ -122,19 +147,22 @@ Deno.serve(async (req) => {
     if (req.method === 'GET') {
       const url = new URL(req.url);
       const project = url.searchParams.get('project');
-      const limit = Math.min(Number(url.searchParams.get('limit') ?? 20), 100);
+      const page = Math.max(1, Number(url.searchParams.get('page') ?? 1));
+      const pageSize = Math.min(100, Math.max(1, Number(url.searchParams.get('pageSize') ?? 20)));
+      const from = (page - 1) * pageSize;
+      const to = from + pageSize - 1;
 
       let query = supabase
         .from('public_runs')
-        .select('*')
+        .select('*', { count: 'exact' })
         .order('created_at', { ascending: false })
-        .limit(limit);
+        .range(from, to);
 
       if (project) {
         query = query.eq('project', project);
       }
 
-      const { data, error } = await query;
+      const { data, error, count } = await query;
 
       if (error) {
         console.error('List runs error:', error);
@@ -142,7 +170,12 @@ Deno.serve(async (req) => {
       }
 
       return new Response(
-        JSON.stringify(data ?? []),
+        JSON.stringify({
+          items: data ?? [],
+          page,
+          pageSize,
+          total: count ?? 0
+        }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
       );
     }

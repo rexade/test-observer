@@ -126,7 +126,6 @@ export type Database = {
           commit: string | null
           coverage: Json | null
           created_at: string | null
-          decisions_count: number | null
           project: string | null
           run_id: string | null
         }

@@ -9,6 +9,7 @@ import { pct, formatTimeAgo, statusFromCoverage } from "@/lib/mirrorUi";
 import type { RunDetail as RunDetailType, Decision } from "@/types/mirror";
 import DecisionsTable from "@/components/DecisionsTable";
 import ManifestSummary from "@/components/ManifestSummary";
+import CopyButton from "@/components/CopyButton";
 
 const RunDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -91,7 +92,12 @@ const RunDetail = () => {
                   <GitBranch className="h-4 w-4" />
                   <span className="font-mono">{run.run.branch}</span>
                 </div>
-                <Badge variant="outline" className="font-mono">{run.run.commit}</Badge>
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="font-mono">
+                    {run.run.commit?.substring(0, 7)}
+                  </Badge>
+                  <CopyButton text={run.run.commit || ''} label="commit" />
+                </div>
                 <div className="flex items-center gap-2">
                   <Clock className="h-4 w-4" />
                   <span>{formatTimeAgo(run.run.created_at)}</span>

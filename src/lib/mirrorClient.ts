@@ -3,7 +3,10 @@ import { supabase } from "@/integrations/supabase/client";
 import type { RunListItem, RunDetail, RunMeta, Coverage, Decision } from "@/types/mirror";
 
 export async function listRuns(project?: string, limit = 20): Promise<RunListItem[]> {
-  const queryParams = new URLSearchParams({ limit: String(limit) });
+  const queryParams = new URLSearchParams({ 
+    page: '1',
+    pageSize: String(limit)
+  });
   if (project) queryParams.set('project', project);
 
   const { data, error } = await supabase.functions.invoke(`runs?${queryParams.toString()}`, {
@@ -11,7 +14,8 @@ export async function listRuns(project?: string, limit = 20): Promise<RunListIte
   });
 
   if (error) throw new Error(error.message);
-  return data as RunListItem[];
+  // Handle paginated response
+  return (data?.items ?? data) as RunListItem[];
 }
 
 export async function getRun(runId: string): Promise<RunDetail> {

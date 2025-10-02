@@ -27,10 +27,15 @@ export default function DecisionsTable({ decisions }: { decisions: Decision[] })
         <TableBody>
           {decisions.map((d, i) => (
             <TableRow key={i}>
-              <TableCell className="font-mono font-medium">{d.oracle}</TableCell>
+              <TableCell className="font-mono font-medium text-sm">{d.oracle}</TableCell>
               <TableCell>
                 <Badge 
-                  variant={d.result === "pass" ? "default" : d.result === "skip" ? "secondary" : "destructive"}
+                  variant={
+                    d.result === "pass" ? "default" : 
+                    d.result === "skip" ? "secondary" : 
+                    d.result === "error" ? "outline" :
+                    "destructive"
+                  }
                   className="capitalize"
                 >
                   {d.result}
