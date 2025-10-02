@@ -103,7 +103,7 @@ Deno.serve(async (req) => {
           coverage: body.coverage,
           decisions_count: body.decisions.length
         }, { onConflict: 'run_id' })
-        .select()
+        .select('id, run_id')
         .single();
 
       if (runError) {
@@ -111,16 +111,18 @@ Deno.serve(async (req) => {
         throw runError;
       }
 
-      console.log('Run upserted:', run.run_id);
+      console.log('Run upserted:', run.run_id, 'with id:', run.id);
 
       // Insert run_requirements from coverage.by_requirement
       if (body.coverage?.by_requirement && body.coverage.by_requirement.length > 0) {
+        console.log('Processing', body.coverage.by_requirement.length, 'requirement mappings');
         const requirementsData = body.coverage.by_requirement.map(r => ({
-          run_id: run.id,
+          run_id: run.id,  // Use the bigint id, not the string run_id
           requirement_id: r.id,
           status: r.result
         }));
 
+        console.log('Upserting requirements with run_id (bigint):', run.id);
         const { error: reqError } = await supabase
           .from('run_requirements')
           .upsert(requirementsData, { onConflict: 'run_id,requirement_id' });
