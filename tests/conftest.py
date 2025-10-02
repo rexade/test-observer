@@ -13,16 +13,19 @@ def pytest_runtest_makereport(item, call):
         return
     
     # Extract requirement marker and add as property
-    rid = next((m.args[0] for m in item.iter_markers(name="requirement")), None)
-    if rid:
-        item.user_properties.append(("requirement_id", rid))
+    for marker in item.iter_markers(name="requirement"):
+        if marker.args:
+            item.user_properties.append(("requirement_id", marker.args[0]))
+            break
     
     # Extract interface marker and add as property
-    iface = next((m.args[0] for m in item.iter_markers(name="interface")), None)
-    if iface:
-        item.user_properties.append(("interface", iface))
+    for marker in item.iter_markers(name="interface"):
+        if marker.args:
+            item.user_properties.append(("interface", marker.args[0]))
+            break
     
     # Extract module marker if present
-    module = next((m.args[0] for m in item.iter_markers(name="module")), None)
-    if module:
-        item.user_properties.append(("module", module))
+    for marker in item.iter_markers(name="module"):
+        if marker.args:
+            item.user_properties.append(("module", marker.args[0]))
+            break
