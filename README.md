@@ -1,73 +1,122 @@
-# Welcome to your Lovable project
+# Reactive Mirror
 
-## Project info
+**Google Maps for Testing** - Navigate your system behavior with proof-grade test coverage.
 
-**URL**: https://lovable.dev/projects/523d81ff-0de0-4830-b61c-bb4b1cee87ca
+![Coverage](https://hvwnpeaktvusoqbjojxk.supabase.co/functions/v1/coverage-badge/reactive-mirror)
 
-## How can I edit this code?
+Reactive Mirror transforms test execution into an explorable, auditable coverage map. Instead of walls of green checkmarks, you get:
 
-There are several ways of editing your application.
+- **Living Coverage Map**: Requirements → Tests → Evidence → Proof
+- **Temporal Oracles**: Prove timing guarantees, not just code paths
+- **Compliance-Ready**: Signed manifests, audit trails, standards mapping
+- **AI-Assisted Gaps**: Intelligent oracle suggestions for untested scenarios
+
+## Quick Start
+
+```bash
+# Install the pytest plugin
+pip install pytest-mirror
+
+# Run tests with Mirror capture
+pytest --mirror-capture
+
+# Upload results to your dashboard
+python scripts/build_mirror_payload.py
+curl -X POST "$SUPABASE_URL/functions/v1/runs" \
+  -H "Authorization: Bearer $SERVICE_KEY" \
+  --data-binary @payload.json
+```
+
+## Features
+
+✅ **Production-Ready Backend**
+- Atomic operations, idempotency, race-condition safe
+- ETag caching, pagination, signed manifests
+- Lovable Cloud powered (zero external dependencies)
+
+✅ **Industry Standards**
+- ITxPT, AUTOSAR, ISO26262, DO-178C mapping
+- Risk-weighted coverage metrics
+- Audit-grade proof generation
+
+✅ **Developer Experience**
+- Beautiful React dashboard with live updates
+- GitHub Actions integration
+- Coverage badges for READMEs
+- One-command deployment
+
+## Documentation
+
+- [Deployment Guide](./DEPLOYMENT.md) - Complete setup walkthrough
+- [API Reference](./API.md) - Full endpoint documentation
+- [GitHub Actions](./.github/workflows/mirror-upload.yml) - CI/CD integration
+
+## Architecture
+
+```
+┌─────────────┐     ┌──────────────┐     ┌─────────────┐
+│   Pytest    │────▶│ Event JSONL  │────▶│  Evaluator  │
+│  + Plugin   │     │  (Envelopes) │     │   + YAML    │
+└─────────────┘     └──────────────┘     └─────────────┘
+                                               │
+                                               ▼
+┌─────────────┐     ┌──────────────┐     ┌─────────────┐
+│   React     │◀────│  Cloud API   │◀────│  Decisions  │
+│  Dashboard  │     │  (Edge Fns)  │     │  + Manifest │
+└─────────────┘     └──────────────┘     └─────────────┘
+```
+
+## Deployment Status
+
+🟢 **Backend**: Lovable Cloud  
+🟢 **Database**: PostgreSQL + RLS  
+🟢 **Functions**: 4 edge functions deployed  
+🟢 **Security**: Audit-grade compliance  
+
+## Tech Stack
+
+Built with:
+- **Frontend**: React + TypeScript + Vite
+- **UI**: shadcn/ui + Tailwind CSS
+- **Backend**: Lovable Cloud (Supabase)
+- **Database**: PostgreSQL with RLS
+- **Functions**: Edge Functions (Deno)
+
+## How to Edit This Code
 
 **Use Lovable**
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/523d81ff-0de0-4830-b61c-bb4b1cee87ca) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
+Visit the [Lovable Project](https://lovable.dev/projects/523d81ff-0de0-4830-b61c-bb4b1cee87ca) and start prompting.
 
 **Use your preferred IDE**
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
 git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
 cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
 npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+**Edit directly in GitHub**
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+Navigate to files and click the "Edit" button (pencil icon).
 
 **Use GitHub Codespaces**
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+Click "Code" → "Codespaces" → "New codespace"
 
-## What technologies are used for this project?
+## Deployment
 
-This project is built with:
+Simply open [Lovable](https://lovable.dev/projects/523d81ff-0de0-4830-b61c-bb4b1cee87ca) and click Share → Publish.
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+For custom domains, navigate to Project → Settings → Domains.
 
-## How can I deploy this project?
+Read more: [Custom domains](https://docs.lovable.dev/features/custom-domain)
 
-Simply open [Lovable](https://lovable.dev/projects/523d81ff-0de0-4830-b61c-bb4b1cee87ca) and click on Share -> Publish.
+## Contributing
 
-## Can I connect a custom domain to my Lovable project?
+This project is built on [Lovable](https://lovable.dev) - AI-powered full-stack development.
 
-Yes, you can!
+## License
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+MIT License - See LICENSE for details.

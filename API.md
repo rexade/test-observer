@@ -4,6 +4,28 @@
 
 Reactive Mirror provides a production-ready backend for test coverage tracking with atomic operations, idempotency, and comprehensive observability.
 
+## Quick Start
+
+```bash
+export BASE="https://[project-id].supabase.co/functions/v1"
+export SERVICE_KEY="[your-service-role-key]"
+
+# Submit a test run
+curl -X POST "$BASE/runs" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $SERVICE_KEY" \
+  -H "apikey: $SERVICE_KEY" \
+  --data-binary @payload.json
+
+# List recent runs
+curl "$BASE/runs?project=owner/repo&page=1&pageSize=20"
+
+# Get coverage badge
+curl "$BASE/coverage-badge/owner%2Frepo"
+```
+
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for complete setup instructions.
+
 ## Base URL
 
 ```

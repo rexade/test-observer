@@ -1,1 +1,17 @@
 project_id = "hvwnpeaktvusoqbjojxk"
+
+# Edge Functions Configuration
+# Public read endpoints (no JWT required)
+[functions.run-detail]
+verify_jwt = false
+
+[functions.run-decisions]
+verify_jwt = false
+
+[functions.coverage-badge]
+verify_jwt = false
+
+# runs endpoint handles both GET (public) and POST (service role only)
+# POST is protected by service role key in the function code
+[functions.runs]
+verify_jwt = false
