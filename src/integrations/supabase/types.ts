@@ -75,27 +75,36 @@ export type Database = {
           created_at: string
           description: string | null
           id: number
+          interface: string | null
+          module: string | null
           project_id: number
           req_id: string
           risk_level: string | null
+          risk_weight: number | null
           title: string | null
         }
         Insert: {
           created_at?: string
           description?: string | null
           id?: number
+          interface?: string | null
+          module?: string | null
           project_id: number
           req_id: string
           risk_level?: string | null
+          risk_weight?: number | null
           title?: string | null
         }
         Update: {
           created_at?: string
           description?: string | null
           id?: number
+          interface?: string | null
+          module?: string | null
           project_id?: number
           req_id?: string
           risk_level?: string | null
+          risk_weight?: number | null
           title?: string | null
         }
         Relationships: [
@@ -104,6 +113,32 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      run_requirements: {
+        Row: {
+          requirement_id: string
+          run_id: number
+          status: string
+        }
+        Insert: {
+          requirement_id: string
+          run_id: number
+          status: string
+        }
+        Update: {
+          requirement_id?: string
+          run_id?: number
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "run_requirements_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "runs"
             referencedColumns: ["id"]
           },
         ]
@@ -160,6 +195,28 @@ export type Database = {
       }
     }
     Views: {
+      public_requirements_coverage: {
+        Row: {
+          coverage: number | null
+          covered_reqs: number | null
+          covered_weight: number | null
+          interface: string | null
+          module: string | null
+          risk_weighted: number | null
+          run_id: number | null
+          total_reqs: number | null
+          total_weight: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "run_requirements_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       public_runs: {
         Row: {
           branch: string | null
