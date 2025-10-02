@@ -19,7 +19,7 @@ jobs:
       PIP_DISABLE_PIP_VERSION_CHECK: 1
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
       SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
-      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.MIRROR_SERVICE_KEY }}
       PROJECT_SLUG: ${{ github.repository }}
 
     steps:
