@@ -31,10 +31,10 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Install deps (pytest + coverage)
+      - name: Install deps (pytest + coverage + lxml)
         run: |
           python -m pip install --upgrade pip
-          pip install pytest pytest-cov requests
+          pip install pytest pytest-cov requests lxml
 
       - name: Run tests
         run: |
@@ -42,7 +42,18 @@ jobs:
           pytest -q \
             --maxfail=1 \
             --cov=. --cov-report=xml:reports/coverage.xml \
-            --junitxml=reports/junit.xml
+            --junitxml=reports/junit.xml \
+            -o junit_family=xunit2
+        continue-on-error: true
+
+      - name: Generate signed manifest
+        run: |
+          python scripts/generate_manifest.py reports reports/manifest.json
+        continue-on-error: true
+
+      - name: Detect flaky tests
+        run: |
+          python scripts/detect_flaky.py reports/junit.xml
         continue-on-error: true
 
       - name: Upload artifacts to GitHub
@@ -58,12 +69,13 @@ jobs:
           for file in reports/*.xml reports/*.json; do
             if [ -f "$file" ]; then
               filename=$(basename "$file")
+              echo "Uploading ${filename}..."
               curl -X POST \
                 "${SUPABASE_URL}/storage/v1/object/test-artifacts/runs/${RUN_ID}/${filename}" \
                 -H "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
                 -H "Content-Type: application/octet-stream" \
-                --data-binary "@${file}"
-              echo "Uploaded: ${filename}"
+                --data-binary "@${file}" \
+                -w "\n  Status: %{http_code}\n"
             fi
           done
 
@@ -125,33 +137,43 @@ jobs:
           
           # Build decisions from test results
           decisions = []
+          flaky_tests = []
+          
+          # Load flaky test data if available
+          try:
+            if os.path.exists('reports/flaky_tests.json'):
+              flaky_data = json.loads(open('reports/flaky_tests.json').read())
+              flaky_tests = list(flaky_data.keys())
+          except Exception:
+            pass
+          
           try:
             for testcase in junit.iter('testcase'):
               name = testcase.get('name', 'Unknown')
               classname = testcase.get('classname', '')
+              full_name = f"{classname}.{name}"
               failure = testcase.find('failure')
               error = testcase.find('error')
               
+              decision = {
+                "oracle": full_name,
+                "evidence": [f"{artifact_base}/junit.xml"]
+              }
+              
+              # Mark flaky tests
+              if full_name in flaky_tests:
+                decision["message"] = "⚠ Flaky test detected"
+              
               if failure is not None:
-                decisions.append({
-                  "oracle": f"{classname}.{name}",
-                  "result": "fail",
-                  "message": failure.get('message', 'Test failed'),
-                  "evidence": [f"{artifact_base}/junit.xml"]
-                })
+                decision["result"] = "fail"
+                decision["message"] = decision.get("message", "") + " | " + failure.get('message', 'Test failed')
               elif error is not None:
-                decisions.append({
-                  "oracle": f"{classname}.{name}",
-                  "result": "error",
-                  "message": error.get('message', 'Test error'),
-                  "evidence": [f"{artifact_base}/junit.xml"]
-                })
+                decision["result"] = "error"
+                decision["message"] = decision.get("message", "") + " | " + error.get('message', 'Test error')
               else:
-                decisions.append({
-                  "oracle": f"{classname}.{name}",
-                  "result": "pass",
-                  "evidence": [f"{artifact_base}/junit.xml"]
-                })
+                decision["result"] = "pass"
+              
+              decisions.append(decision)
           except Exception as e:
             print(f"Warning: Could not extract decisions: {e}")
             decisions = [{"oracle": "pytest", "result": "pass", "evidence": [f"{artifact_base}/junit.xml"]}]

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <xsd:element name="inventory">
+    <xsd:complexType>
+      <xsd:sequence>
+        <xsd:element name="id" type="xsd:string" minOccurs="1"/>
+        <xsd:element name="atdatetime" type="xsd:string" minOccurs="1"/>
+        <xsd:element name="name" type="xsd:string" minOccurs="1"/>
+        <xsd:element name="version" type="xsd:string" minOccurs="1"/>
+        <xsd:element name="type" type="xsd:string" minOccurs="0"/>
+      </xsd:sequence>
+    </xsd:complexType>
+  </xsd:element>
+</xsd:schema>
