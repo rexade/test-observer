@@ -1,13 +1,50 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, XCircle, Clock, TrendingUp, GitBranch, Shield } from "lucide-react";
+import type { RunListItem } from "@/types/mirror";
 
 const Dashboard = () => {
-  const mockRuns = [
-    { id: "run-1", branch: "main", commit: "a3f2c1d", timestamp: "2 hours ago", status: "passed", coverage: 94 },
-    { id: "run-2", branch: "feature/auth", commit: "b7e9f3a", timestamp: "5 hours ago", status: "passed", coverage: 87 },
-    { id: "run-3", branch: "main", commit: "c2d4e5f", timestamp: "1 day ago", status: "failed", coverage: 82 },
+  // Mock data matching real API structure
+  const mockRuns: RunListItem[] = [
+    {
+      run_id: "01HXYZ123456",
+      project: "acme/vehicle-fw",
+      branch: "main",
+      commit: "a3f2c1d",
+      created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+      ci: { provider: "github_actions", workflow: "tests" },
+      coverage: { requirement: 0.94, temporal: 0.87, interface: 0.92, risk: 0.89 }
+    },
+    {
+      run_id: "01HXYZ123457",
+      project: "acme/vehicle-fw",
+      branch: "feature/ntp",
+      commit: "b7e9f3a",
+      created_at: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
+      ci: { provider: "github_actions", workflow: "tests" },
+      coverage: { requirement: 0.87, temporal: 0.61, interface: 0.75, risk: 0.83 }
+    },
+    {
+      run_id: "01HXYZ123458",
+      project: "acme/vehicle-fw",
+      branch: "main",
+      commit: "c2d4e5f",
+      created_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+      ci: { provider: "github_actions", workflow: "tests" },
+      coverage: { requirement: 0.82, temporal: 0.55, interface: 0.68, risk: 0.76 }
+    },
   ];
+
+  const formatTimeAgo = (isoDate: string) => {
+    const ms = Date.now() - new Date(isoDate).getTime();
+    const hours = Math.floor(ms / (1000 * 60 * 60));
+    if (hours < 24) return `${hours} hours ago`;
+    return `${Math.floor(hours / 24)} day${hours >= 48 ? 's' : ''} ago`;
+  };
+
+  const getRunStatus = (coverage: { requirement: number; temporal: number }) => {
+    return coverage.requirement >= 0.85 && coverage.temporal >= 0.6 ? "passed" : "failed";
+  };
 
   return (
     <div className="min-h-screen bg-background py-8">
@@ -70,32 +107,39 @@ const Dashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {mockRuns.map((run) => (
-                <div key={run.id} className="flex items-center justify-between p-4 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
-                  <div className="flex items-center gap-4">
-                    {run.status === "passed" ? (
-                      <CheckCircle2 className="h-8 w-8 text-success" />
-                    ) : (
-                      <XCircle className="h-8 w-8 text-destructive" />
-                    )}
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <GitBranch className="h-4 w-4 text-muted-foreground" />
-                        <span className="font-mono text-sm">{run.branch}</span>
-                        <Badge variant="outline" className="text-xs">{run.commit}</Badge>
+              {mockRuns.map((run) => {
+                const status = getRunStatus(run.coverage);
+                return (
+                  <div key={run.run_id} className="flex items-center justify-between p-4 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
+                    <div className="flex items-center gap-4">
+                      {status === "passed" ? (
+                        <CheckCircle2 className="h-8 w-8 text-success" />
+                      ) : (
+                        <XCircle className="h-8 w-8 text-destructive" />
+                      )}
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <GitBranch className="h-4 w-4 text-muted-foreground" />
+                          <span className="font-mono text-sm">{run.branch}</span>
+                          <Badge variant="outline" className="text-xs">{run.commit}</Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground">{formatTimeAgo(run.created_at)}</p>
                       </div>
-                      <p className="text-sm text-muted-foreground">{run.timestamp}</p>
+                    </div>
+                    <div className="flex items-center gap-6">
+                      <div className="text-right">
+                        <p className="text-2xl font-bold">{Math.round(run.coverage.requirement * 100)}%</p>
+                        <p className="text-xs text-muted-foreground">Requirement</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-2xl font-bold">{Math.round(run.coverage.temporal * 100)}%</p>
+                        <p className="text-xs text-muted-foreground">Temporal</p>
+                      </div>
+                      <Shield className="h-5 w-5 text-primary" />
                     </div>
                   </div>
-                  <div className="flex items-center gap-6">
-                    <div className="text-right">
-                      <p className="text-2xl font-bold">{run.coverage}%</p>
-                      <p className="text-xs text-muted-foreground">Coverage</p>
-                    </div>
-                    <Shield className="h-5 w-5 text-primary" />
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </CardContent>
         </Card>
