@@ -70,12 +70,14 @@ jobs:
             if [ -f "$file" ]; then
               filename=$(basename "$file")
               echo "Uploading ${filename}..."
-              curl -X POST \
+              response=$(curl -sS -X POST \
                 "${SUPABASE_URL}/storage/v1/object/test-artifacts/runs/${RUN_ID}/${filename}" \
                 -H "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
+                -H "apikey: ${SUPABASE_ANON_KEY}" \
                 -H "Content-Type: application/octet-stream" \
                 --data-binary "@${file}" \
-                -w "\n  Status: %{http_code}\n"
+                -w "\n%{http_code}")
+              echo "Response: $response"
             fi
           done
 
