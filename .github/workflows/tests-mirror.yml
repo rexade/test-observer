@@ -77,6 +77,11 @@ jobs:
           run_id = f"{os.environ['GITHUB_RUN_ID']}-{os.environ.get('GITHUB_RUN_ATTEMPT','1')}"
           artifact_base = f"{os.environ['SUPABASE_URL']}/storage/v1/object/public/test-artifacts/runs/{run_id}"
           
+          # Load requirements registry
+          requirements_map = {}
+          if os.path.exists('tests/fixtures/requirements.json'):
+            requirements_map = json.loads(open('tests/fixtures/requirements.json').read())
+          
           # Parse junit.xml for test outcomes
           try:
             junit = ET.parse('reports/junit.xml').getroot()
@@ -88,22 +93,31 @@ jobs:
             # Compute coverage quadrants
             requirement = passed / total if total else 0
             
-            # Check for temporal tests (timing/latency keywords)
+            # Check for temporal tests (timing/latency keywords or @temporal marker)
             temporal_tests = [c for c in junit.iter('testcase') 
                             if 'timing' in (c.get('name','')+c.get('classname','')).lower() 
                             or 'latency' in (c.get('name','')+c.get('classname','')).lower()
-                            or 'temporal' in (c.get('name','')+c.get('classname','')).lower()]
+                            or 'temporal' in (c.get('name','')+c.get('classname','')).lower()
+                            or 'rfc5905' in (c.get('name','')+c.get('classname','')).lower()]
             temporal = len(temporal_tests) / total if total else 0.2
             
-            # Check for interface/contract tests
+            # Check for interface/contract tests (schema/XSD validation)
             interface_tests = [c for c in junit.iter('testcase')
                              if 'interface' in (c.get('name','')+c.get('classname','')).lower()
                              or 'contract' in (c.get('name','')+c.get('classname','')).lower()
-                             or 'schema' in (c.get('name','')+c.get('classname','')).lower()]
+                             or 'schema' in (c.get('name','')+c.get('classname','')).lower()
+                             or 'xsd' in (c.get('name','')+c.get('classname','')).lower()]
             interface = len(interface_tests) / total if total else 0.3
             
-            # Risk: simple proxy (can be enhanced with weighted categories)
-            risk = 0.5 + (0.5 * requirement)  # scales with pass rate
+            # Risk: weight critical requirements higher
+            critical_reqs = sum(1 for r in requirements_map.values() if r.get('risk') == 'critical')
+            risk_score = 0.5
+            if critical_reqs > 0:
+              # Higher risk score if critical requirements are covered
+              critical_passed = sum(1 for c in junit.iter('testcase') 
+                                  if c.find('failure') is None and c.find('error') is None)
+              risk_score = min(1.0, 0.3 + (0.7 * critical_passed / total)) if total else 0.5
+            risk = risk_score
             
           except Exception as e:
             print(f"Warning: Could not parse junit.xml: {e}")

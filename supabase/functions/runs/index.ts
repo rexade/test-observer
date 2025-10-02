@@ -147,19 +147,31 @@ Deno.serve(async (req) => {
     if (req.method === 'GET') {
       const url = new URL(req.url);
       const project = url.searchParams.get('project');
+      const branch = url.searchParams.get('branch');
+      const from_date = url.searchParams.get('from');
+      const to_date = url.searchParams.get('to');
       const page = Math.max(1, Number(url.searchParams.get('page') ?? 1));
       const pageSize = Math.min(100, Math.max(1, Number(url.searchParams.get('pageSize') ?? 20)));
-      const from = (page - 1) * pageSize;
-      const to = from + pageSize - 1;
+      const offset = (page - 1) * pageSize;
+      const limit = offset + pageSize - 1;
 
       let query = supabase
         .from('public_runs')
         .select('*', { count: 'exact' })
         .order('created_at', { ascending: false })
-        .range(from, to);
+        .range(offset, limit);
 
       if (project) {
         query = query.eq('project', project);
+      }
+      if (branch) {
+        query = query.eq('branch', branch);
+      }
+      if (from_date) {
+        query = query.gte('created_at', from_date);
+      }
+      if (to_date) {
+        query = query.lte('created_at', to_date);
       }
 
       const { data, error, count } = await query;

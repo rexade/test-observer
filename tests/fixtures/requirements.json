@@ -1,0 +1,22 @@
+{
+  "S02P01-INV-001": {
+    "title": "Inventory Service Available",
+    "description": "The inventory service must respond with module list",
+    "risk": "critical"
+  },
+  "S02P02-TIME-003": {
+    "title": "Time Synchronization",
+    "description": "System time must be synchronized within 100ms",
+    "risk": "high"
+  },
+  "S03P01-GNSS-001": {
+    "title": "GNSS Position Accuracy",
+    "description": "GNSS position must have accuracy within 5 meters",
+    "risk": "high"
+  },
+  "S04P01-INTF-001": {
+    "title": "Interface Contract Compliance",
+    "description": "All interfaces must comply with ITxPT schema definitions",
+    "risk": "critical"
+  }
+}

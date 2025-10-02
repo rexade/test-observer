@@ -70,6 +70,44 @@ export type Database = {
         }
         Relationships: []
       }
+      requirements: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: number
+          project_id: number
+          req_id: string
+          risk_level: string | null
+          title: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: number
+          project_id: number
+          req_id: string
+          risk_level?: string | null
+          title?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: number
+          project_id?: number
+          req_id?: string
+          risk_level?: string | null
+          title?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "requirements_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       runs: {
         Row: {
           branch: string | null
@@ -81,6 +119,7 @@ export type Database = {
           id: number
           manifest: Json | null
           project_id: number
+          requirements_coverage: Json | null
           run_id: string
         }
         Insert: {
@@ -93,6 +132,7 @@ export type Database = {
           id?: number
           manifest?: Json | null
           project_id: number
+          requirements_coverage?: Json | null
           run_id: string
         }
         Update: {
@@ -105,6 +145,7 @@ export type Database = {
           id?: number
           manifest?: Json | null
           project_id?: number
+          requirements_coverage?: Json | null
           run_id?: string
         }
         Relationships: [
