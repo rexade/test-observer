@@ -76,7 +76,7 @@ Deno.serve(async (req) => {
       headers: {
         ...corsHeaders,
         'Content-Type': 'image/svg+xml',
-        'Cache-Control': 'no-store'
+        'Cache-Control': 'public, max-age=60, stale-while-revalidate=300'
       },
       status: 200
     });

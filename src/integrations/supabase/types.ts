@@ -16,31 +16,31 @@ export type Database = {
     Tables: {
       decisions: {
         Row: {
-          evidence: string[] | null
+          evidence: string[]
           id: number
           message: string | null
           oracle: string
           result: string
           run_id: number
-          satisfies: string[] | null
+          satisfies: string[]
         }
         Insert: {
-          evidence?: string[] | null
+          evidence?: string[]
           id?: number
           message?: string | null
           oracle: string
           result: string
           run_id: number
-          satisfies?: string[] | null
+          satisfies?: string[]
         }
         Update: {
-          evidence?: string[] | null
+          evidence?: string[]
           id?: number
           message?: string | null
           oracle?: string
           result?: string
           run_id?: number
-          satisfies?: string[] | null
+          satisfies?: string[]
         }
         Relationships: [
           {
@@ -54,17 +54,17 @@ export type Database = {
       }
       projects: {
         Row: {
-          created_at: string | null
+          created_at: string
           id: number
           slug: string
         }
         Insert: {
-          created_at?: string | null
+          created_at?: string
           id?: number
           slug: string
         }
         Update: {
-          created_at?: string | null
+          created_at?: string
           id?: number
           slug?: string
         }
@@ -72,43 +72,40 @@ export type Database = {
       }
       runs: {
         Row: {
-          branch: string
-          ci: Json | null
-          commit: string
-          coverage: Json
+          branch: string | null
+          ci: Json
+          commit: string | null
+          coverage: Json | null
           created_at: string
-          decisions_count: number | null
+          decisions_count: number
           id: number
-          manifest: Json
+          manifest: Json | null
           project_id: number
           run_id: string
-          signature: Json | null
         }
         Insert: {
-          branch: string
-          ci?: Json | null
-          commit: string
-          coverage: Json
+          branch?: string | null
+          ci?: Json
+          commit?: string | null
+          coverage?: Json | null
           created_at: string
-          decisions_count?: number | null
+          decisions_count?: number
           id?: number
-          manifest: Json
+          manifest?: Json | null
           project_id: number
           run_id: string
-          signature?: Json | null
         }
         Update: {
-          branch?: string
-          ci?: Json | null
-          commit?: string
-          coverage?: Json
+          branch?: string | null
+          ci?: Json
+          commit?: string | null
+          coverage?: Json | null
           created_at?: string
-          decisions_count?: number | null
+          decisions_count?: number
           id?: number
-          manifest?: Json
+          manifest?: Json | null
           project_id?: number
           run_id?: string
-          signature?: Json | null
         }
         Relationships: [
           {
@@ -122,7 +119,19 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      public_runs: {
+        Row: {
+          branch: string | null
+          ci: Json | null
+          commit: string | null
+          coverage: Json | null
+          created_at: string | null
+          decisions_count: number | null
+          project: string | null
+          run_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       [_ in never]: never

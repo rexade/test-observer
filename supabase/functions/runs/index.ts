@@ -15,7 +15,7 @@ type Coverage = {
 
 type Decision = { 
   oracle: string; 
-  result: "pass" | "fail"; 
+  result: "pass" | "fail" | "skip" | "error"; 
   satisfies?: string[]; 
   evidence?: string[]; 
   message?: string 
@@ -64,29 +64,10 @@ Deno.serve(async (req) => {
         throw projectError;
       }
 
-      // Check for existing run (idempotency)
-      const { data: existingRun } = await supabase
-        .from('runs')
-        .select('run_id')
-        .eq('run_id', body.run.run_id)
-        .maybeSingle();
-
-      if (existingRun) {
-        console.log('Run already exists (idempotent):', existingRun.run_id);
-        return new Response(
-          JSON.stringify({ 
-            run_id: existingRun.run_id, 
-            dashboard_url: `/runs/${existingRun.run_id}`, 
-            idempotent: true 
-          }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
-        );
-      }
-
-      // Insert run
+      // Check for existing run (idempotency) and insert atomically
       const { data: run, error: runError } = await supabase
         .from('runs')
-        .insert({
+        .upsert({
           run_id: body.run.run_id,
           project_id: project.id,
           commit: body.run.commit,
@@ -96,16 +77,18 @@ Deno.serve(async (req) => {
           manifest: body.manifest,
           coverage: body.coverage,
           decisions_count: body.decisions.length
-        })
+        }, { onConflict: 'run_id' })
         .select()
         .single();
 
       if (runError) {
-        console.error('Run insert error:', runError);
+        console.error('Run upsert error:', runError);
         throw runError;
       }
 
-      // Insert decisions
+      console.log('Run upserted:', run.run_id);
+
+      // Insert or update decisions (idempotent per run+oracle)
       if (body.decisions.length > 0) {
         const decisionsData = body.decisions.map(d => ({
           run_id: run.id,
@@ -118,10 +101,10 @@ Deno.serve(async (req) => {
 
         const { error: decisionsError } = await supabase
           .from('decisions')
-          .insert(decisionsData);
+          .upsert(decisionsData, { onConflict: 'run_id,oracle' });
 
         if (decisionsError) {
-          console.error('Decisions insert error:', decisionsError);
+          console.error('Decisions upsert error:', decisionsError);
           throw decisionsError;
         }
       }
@@ -142,21 +125,13 @@ Deno.serve(async (req) => {
       const limit = Math.min(Number(url.searchParams.get('limit') ?? 20), 100);
 
       let query = supabase
-        .from('runs')
-        .select(`
-          run_id,
-          commit,
-          branch,
-          created_at,
-          ci,
-          coverage,
-          projects!inner(slug)
-        `)
+        .from('public_runs')
+        .select('*')
         .order('created_at', { ascending: false })
         .limit(limit);
 
       if (project) {
-        query = query.eq('projects.slug', project);
+        query = query.eq('project', project);
       }
 
       const { data, error } = await query;
@@ -166,21 +141,8 @@ Deno.serve(async (req) => {
         throw error;
       }
 
-      const runs = data.map((r: any) => {
-        const projectSlug = r.projects?.slug ?? 'unknown';
-        return {
-          run_id: r.run_id,
-          project: projectSlug,
-          commit: r.commit,
-          branch: r.branch,
-          created_at: r.created_at,
-          ci: r.ci,
-          coverage: r.coverage
-        };
-      });
-
       return new Response(
-        JSON.stringify(runs),
+        JSON.stringify(data ?? []),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
       );
     }

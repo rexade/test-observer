@@ -10,7 +10,7 @@ export type Coverage = {
 
 export type Decision = {
   oracle: string;
-  result: "pass" | "fail";
+  result: "pass" | "fail" | "skip" | "error";
   satisfies?: string[];
   evidence?: string[];
   message?: string;

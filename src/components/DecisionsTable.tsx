@@ -1,6 +1,7 @@
 import type { Decision } from "@/types/mirror";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import Evidence from "./Evidence";
 
 export default function DecisionsTable({ decisions }: { decisions: Decision[] }) {
   if (!decisions?.length) {
@@ -26,10 +27,10 @@ export default function DecisionsTable({ decisions }: { decisions: Decision[] })
         <TableBody>
           {decisions.map((d, i) => (
             <TableRow key={i}>
-              <TableCell className="font-medium">{d.oracle}</TableCell>
+              <TableCell className="font-mono font-medium">{d.oracle}</TableCell>
               <TableCell>
                 <Badge 
-                  variant={d.result === "pass" ? "default" : "destructive"}
+                  variant={d.result === "pass" ? "default" : d.result === "skip" ? "secondary" : "destructive"}
                   className="capitalize"
                 >
                   {d.result}
@@ -39,7 +40,7 @@ export default function DecisionsTable({ decisions }: { decisions: Decision[] })
                 {d.satisfies && d.satisfies.length > 0 ? (
                   <div className="flex flex-wrap gap-1">
                     {d.satisfies.map((s) => (
-                      <Badge key={s} variant="outline" className="text-xs">
+                      <Badge key={s} variant="outline" className="text-xs font-mono">
                         {s}
                       </Badge>
                     ))}
@@ -52,13 +53,7 @@ export default function DecisionsTable({ decisions }: { decisions: Decision[] })
                 {d.message || <span className="text-muted-foreground">—</span>}
               </TableCell>
               <TableCell className="max-w-xs">
-                {d.evidence && d.evidence.length > 0 ? (
-                  <div className="text-xs text-muted-foreground">
-                    {d.evidence.join(", ")}
-                  </div>
-                ) : (
-                  <span className="text-muted-foreground">—</span>
-                )}
+                <Evidence items={d.evidence} />
               </TableCell>
             </TableRow>
           ))}

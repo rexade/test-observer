@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, XCircle, ArrowLeft, GitBranch, Shield, Clock } from "lucide-react";
+import { CheckCircle2, XCircle, ArrowLeft, GitBranch, Shield, Clock, ExternalLink } from "lucide-react";
 import { getRun, getDecisions } from "@/lib/mirrorClient";
 import { pct, formatTimeAgo, statusFromCoverage } from "@/lib/mirrorUi";
 import type { RunDetail as RunDetailType, Decision } from "@/types/mirror";
@@ -86,7 +86,7 @@ const RunDetail = () => {
             )}
             <div>
               <h1 className="text-4xl font-bold">{run.run.project}</h1>
-              <div className="flex items-center gap-3 mt-2 text-muted-foreground">
+              <div className="flex items-center gap-3 mt-2 text-muted-foreground flex-wrap">
                 <div className="flex items-center gap-2">
                   <GitBranch className="h-4 w-4" />
                   <span className="font-mono">{run.run.branch}</span>
@@ -96,6 +96,17 @@ const RunDetail = () => {
                   <Clock className="h-4 w-4" />
                   <span>{formatTimeAgo(run.run.created_at)}</span>
                 </div>
+                {run.run.ci?.run_url && (
+                  <a 
+                    href={run.run.ci.run_url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1 text-primary hover:underline"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                    <span>View in {run.run.ci.provider || 'CI'}</span>
+                  </a>
+                )}
               </div>
             </div>
           </div>
