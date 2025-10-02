@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { CheckCircle2, XCircle, Clock, TrendingUp, GitBranch, Shield, AlertCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -190,12 +191,24 @@ const Dashboard = () => {
                           <p className="text-2xl font-bold">{pct(run.coverage.temporal)}</p>
                           <p className="text-xs text-muted-foreground">Temporal</p>
                         </div>
-                        <Badge 
-                          variant={gateOK ? "default" : "secondary"}
-                          className={gateOK ? "bg-success text-white" : "bg-amber-500 text-white"}
-                        >
-                          {gateOK ? "Gate OK" : "Coverage Low"}
-                        </Badge>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Badge 
+                                variant={gateOK ? "default" : "secondary"}
+                                className={gateOK ? "bg-success text-white cursor-help" : "bg-amber-500 text-white cursor-help"}
+                              >
+                                {gateOK ? "Gate OK" : "Coverage Low"}
+                              </Badge>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p className="text-xs">
+                                Req {pct(run.coverage.requirement)} (≥{Math.round(REQ_THRESHOLD * 100)}%) · 
+                                Tmp {pct(run.coverage.temporal)} (≥{Math.round(TMP_THRESHOLD * 100)}%)
+                              </p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                         <Badge variant="secondary" className="text-xs">
                           Interface {pct(run.coverage.interface)}
                         </Badge>

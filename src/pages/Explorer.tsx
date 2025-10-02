@@ -4,6 +4,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Layers, Network, Activity, AlertCircle, Loader2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { listRuns } from "@/lib/mirrorClient";
+import { testsPassed } from "@/lib/status";
 
 const Explorer = () => {
   const { data: runsData, isLoading, error } = useQuery({
@@ -15,7 +16,7 @@ const Explorer = () => {
   
   // Extract unique test modules as "systems"
   const systems = runs.length > 0 ? (() => {
-    const moduleMap = new Map<string, { name: string; tests: number; lastRun: string }>();
+    const moduleMap = new Map<string, { name: string; passed: boolean; tests: number; lastRun: string }>();
     
     runs.forEach(run => {
       const module = run.project || "unknown";
@@ -23,6 +24,7 @@ const Explorer = () => {
       if (!existing || run.created_at > existing.lastRun) {
         moduleMap.set(module, {
           name: module,
+          passed: testsPassed(run),
           tests: run.coverage?.requirement ? Math.round(run.coverage.requirement * 100) : 0,
           lastRun: run.created_at
         });
@@ -86,7 +88,7 @@ const Explorer = () => {
                     const radius = 140;
                     const x = 400 + radius * Math.cos(angle);
                     const y = 200 + radius * Math.sin(angle);
-                    const isHealthy = system.tests >= 80;
+                    const isHealthy = system.passed; // Use test pass status, not coverage
                     
                     return (
                       <g key={system.name}>
@@ -139,10 +141,10 @@ const Explorer = () => {
                   {/* Legend */}
                   <g transform="translate(20, 20)">
                     <circle cx="5" cy="5" r="5" fill="hsl(var(--success))" opacity="0.6" />
-                    <text x="15" y="9" className="text-xs" fill="hsl(var(--muted-foreground))">Healthy (≥80%)</text>
+                    <text x="15" y="9" className="text-xs" fill="hsl(var(--muted-foreground))">Tests Passed</text>
                     
                     <circle cx="5" cy="25" r="5" fill="hsl(var(--destructive))" opacity="0.6" />
-                    <text x="15" y="29" className="text-xs" fill="hsl(var(--muted-foreground))">Warning (&lt;80%)</text>
+                    <text x="15" y="29" className="text-xs" fill="hsl(var(--muted-foreground))">Tests Failed</text>
                   </g>
                 </svg>
               </div>
@@ -162,10 +164,10 @@ const Explorer = () => {
                       <span className="font-mono text-sm truncate">{system.name}</span>
                     </div>
                     <Badge 
-                      variant={system.tests >= 80 ? "default" : "destructive"}
-                      className={system.tests >= 80 ? "bg-success" : ""}
+                      variant={system.passed ? "default" : "destructive"}
+                      className={system.passed ? "bg-success" : ""}
                     >
-                      {system.tests >= 80 ? "healthy" : "warning"}
+                      {system.passed ? "passed" : "failed"}
                     </Badge>
                   </CardTitle>
                 </CardHeader>

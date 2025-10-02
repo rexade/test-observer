@@ -2,6 +2,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, XCircle, ArrowLeft, GitBranch, Shield, Clock, ExternalLink } from "lucide-react";
 import { getRun, getDecisions } from "@/lib/mirrorClient";
@@ -119,9 +120,21 @@ const RunDetail = () => {
                 <Badge className={okTests ? "bg-success text-white" : "bg-destructive text-white"}>
                   {okTests ? "✓ Tests Passed" : "✗ Tests Failed"}
                 </Badge>
-                <Badge className={gateOK ? "bg-success text-white" : "bg-amber-500 text-white"}>
-                  {gateOK ? "✓ Coverage Gate OK" : `⚠ Coverage Below (Req≥${Math.round(REQ_THRESHOLD * 100)}% · Tmp≥${Math.round(TMP_THRESHOLD * 100)}%)`}
-                </Badge>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Badge className={gateOK ? "bg-success text-white cursor-help" : "bg-amber-500 text-white cursor-help"}>
+                        {gateOK ? "✓ Coverage Gate OK" : `⚠ Coverage Below (Req≥${Math.round(REQ_THRESHOLD * 100)}% · Tmp≥${Math.round(TMP_THRESHOLD * 100)}%)`}
+                      </Badge>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-xs">
+                        Req {pct(run.coverage.requirement)} (≥{Math.round(REQ_THRESHOLD * 100)}%) · 
+                        Tmp {pct(run.coverage.temporal)} (≥{Math.round(TMP_THRESHOLD * 100)}%)
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
                 <Badge variant="outline">
                   Interface {pct(run.coverage.interface)}
                 </Badge>

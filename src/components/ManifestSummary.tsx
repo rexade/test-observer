@@ -7,6 +7,14 @@ interface ManifestSummaryProps {
 }
 
 export default function ManifestSummary({ manifest, counts, tooling }: ManifestSummaryProps) {
+  // Handle different artifact field names (artifacts vs files)
+  const artifacts = Array.isArray(manifest?.artifacts)
+    ? manifest.artifacts
+    : Array.isArray(manifest?.files)
+      ? manifest.files
+      : [];
+  const artifactCount = artifacts.length ?? 0;
+
   return (
     <Card className="p-6">
       <h3 className="text-lg font-semibold mb-4">Manifest Summary</h3>
@@ -24,7 +32,7 @@ export default function ManifestSummary({ manifest, counts, tooling }: ManifestS
         <div>
           <div className="text-sm text-muted-foreground mb-1">Artifacts</div>
           <div className="font-medium">
-            {manifest?.artifacts?.length ?? 0}
+            {artifactCount}
           </div>
         </div>
         <div>
