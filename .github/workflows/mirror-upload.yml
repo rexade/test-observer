@@ -38,7 +38,7 @@ jobs:
         if: always()
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          MIRROR_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          MIRROR_SERVICE_KEY: ${{ secrets.MIRROR_SERVICE_KEY }}
         run: |
           curl -sS -X POST "$SUPABASE_URL/functions/v1/runs" \
             -H "Content-Type: application/json" \
