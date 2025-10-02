@@ -1,11 +1,14 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, XCircle, Clock, TrendingUp, GitBranch, Shield } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import type { RunListItem } from "@/types/mirror";
 import { pct, formatTimeAgo, statusFromCoverage } from "@/lib/mirrorUi";
 
 const Dashboard = () => {
-  // Mock data matching real API structure
+  const navigate = useNavigate();
+
+  // Mock data matching real API structure - sorted by created_at desc
   const mockRuns: RunListItem[] = [
     {
       run_id: "01HXYZ123456",
@@ -34,7 +37,7 @@ const Dashboard = () => {
       ci: { provider: "github_actions", workflow: "tests" },
       coverage: { requirement: 0.82, temporal: 0.55, interface: 0.68, risk: 0.76 }
     },
-  ];
+  ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
   return (
     <div className="min-h-screen bg-background py-8">
@@ -96,41 +99,56 @@ const Dashboard = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {mockRuns.map((run) => {
-                const status = statusFromCoverage(run.coverage);
-                return (
-                  <div key={run.run_id} className="flex items-center justify-between p-4 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
-                    <div className="flex items-center gap-4">
-                      {status === "passed" ? (
-                        <CheckCircle2 className="h-8 w-8 text-success" />
-                      ) : (
-                        <XCircle className="h-8 w-8 text-destructive" />
-                      )}
-                      <div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <GitBranch className="h-4 w-4 text-muted-foreground" />
-                          <span className="font-mono text-sm">{run.branch}</span>
-                          <Badge variant="outline" className="text-xs">{run.commit}</Badge>
+            {mockRuns.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground">
+                <Clock className="h-16 w-16 mx-auto mb-4 opacity-20" />
+                <p>No test runs yet</p>
+                <p className="text-sm mt-2">Upload your first run to get started</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {mockRuns.map((run) => {
+                  const status = statusFromCoverage(run.coverage);
+                  return (
+                    <div
+                      key={run.run_id}
+                      onClick={() => navigate(`/runs/${run.run_id}`)}
+                      className="flex items-center justify-between p-4 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer"
+                    >
+                      <div className="flex items-center gap-4">
+                        {status === "passed" ? (
+                          <CheckCircle2 className="h-8 w-8 text-success" />
+                        ) : (
+                          <XCircle className="h-8 w-8 text-destructive" />
+                        )}
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <GitBranch className="h-4 w-4 text-muted-foreground" />
+                            <span className="font-mono text-sm">{run.branch}</span>
+                            <Badge variant="outline" className="text-xs">{run.commit}</Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground">{formatTimeAgo(run.created_at)}</p>
                         </div>
-                        <p className="text-sm text-muted-foreground">{formatTimeAgo(run.created_at)}</p>
+                      </div>
+                      <div className="flex items-center gap-6">
+                        <div className="text-right">
+                          <p className="text-2xl font-bold">{pct(run.coverage.requirement)}</p>
+                          <p className="text-xs text-muted-foreground">Requirement</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-2xl font-bold">{pct(run.coverage.temporal)}</p>
+                          <p className="text-xs text-muted-foreground">Temporal</p>
+                        </div>
+                        <Badge variant="secondary" className="text-xs">
+                          Interface {pct(run.coverage.interface)}
+                        </Badge>
+                        <Shield className="h-5 w-5 text-primary" />
                       </div>
                     </div>
-                    <div className="flex items-center gap-6">
-                      <div className="text-right">
-                        <p className="text-2xl font-bold">{pct(run.coverage.requirement)}</p>
-                        <p className="text-xs text-muted-foreground">Requirement</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-2xl font-bold">{pct(run.coverage.temporal)}</p>
-                        <p className="text-xs text-muted-foreground">Temporal</p>
-                      </div>
-                      <Shield className="h-5 w-5 text-primary" />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            )}
           </CardContent>
         </Card>
 

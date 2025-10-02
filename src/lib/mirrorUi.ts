@@ -1,11 +1,12 @@
 // lib/mirrorUi.ts
 import type { Coverage } from "@/types/mirror";
 
-export const pct = (v: number) => `${Math.round(v * 100)}%`;
+export const pct = (v?: number) =>
+  Number.isFinite(v) ? `${Math.round((v as number) * 100)}%` : "—";
 
 export const formatTimeAgo = (iso: string) => {
   const diff = Date.now() - new Date(iso).getTime();
-  const mins = Math.floor(diff / 60000);
+  const mins = Math.max(0, Math.floor(diff / 60000));
   if (mins < 60) return `${mins} min${mins === 1 ? "" : "s"} ago`;
   const hrs = Math.floor(mins / 60);
   if (hrs < 24) return `${hrs} hour${hrs === 1 ? "" : "s"} ago`;
@@ -14,4 +15,4 @@ export const formatTimeAgo = (iso: string) => {
 };
 
 export const statusFromCoverage = (c: Coverage) =>
-  c.requirement >= 0.85 && c.temporal >= 0.6 ? "passed" : "failed";
+  c && c.requirement >= 0.85 && c.temporal >= 0.6 ? "passed" : "failed";
