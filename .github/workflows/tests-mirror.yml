@@ -185,7 +185,7 @@ jobs:
               "project": os.environ['PROJECT_SLUG'],
               "commit": os.environ['GITHUB_SHA'][:7],
               "branch": os.environ['GITHUB_REF_NAME'],
-              "created_at": os.environ.get('GITHUB_EVENT_HEAD_COMMIT_TIMESTAMP', ''),
+              "created_at": os.environ.get('GITHUB_EVENT_HEAD_COMMIT_TIMESTAMP') or __import__('datetime').datetime.now(__import__('datetime').timezone.utc).isoformat(),
               "ci": {
                 "provider": "github",
                 "workflow": os.environ.get('GITHUB_WORKFLOW', 'Tests'),
