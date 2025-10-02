@@ -70,14 +70,20 @@ jobs:
             if [ -f "$file" ]; then
               filename=$(basename "$file")
               echo "Uploading ${filename}..."
+              # Use service role key directly without Bearer prefix in apikey header
               response=$(curl -sS -X POST \
                 "${SUPABASE_URL}/storage/v1/object/test-artifacts/runs/${RUN_ID}/${filename}" \
                 -H "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
-                -H "apikey: ${SUPABASE_ANON_KEY}" \
+                -H "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
                 -H "Content-Type: application/octet-stream" \
                 --data-binary "@${file}" \
                 -w "\n%{http_code}")
-              echo "Response: $response"
+              http_code=$(echo "$response" | tail -n1)
+              body=$(echo "$response" | head -n-1)
+              echo "HTTP $http_code: $body"
+              if [ "$http_code" != "200" ] && [ "$http_code" != "201" ]; then
+                echo "Warning: Upload failed for ${filename}"
+              fi
             fi
           done
 
@@ -103,6 +109,9 @@ jobs:
             failures = sum(int(s.get('failures', 0)) for s in junit.iter('testsuite'))
             errors = sum(int(s.get('errors', 0)) for s in junit.iter('testsuite'))
             passed = max(total - failures - errors, 0)
+            
+            # Track requirements coverage
+            by_requirement = {}
             
             # Compute coverage quadrants
             requirement = passed / total if total else 0
@@ -157,6 +166,31 @@ jobs:
               failure = testcase.find('failure')
               error = testcase.find('error')
               
+              # Extract requirement_id from properties
+              req_id = None
+              properties = testcase.find('properties')
+              if properties is not None:
+                for prop in properties.findall('property'):
+                  if prop.get('name') == 'requirement_id':
+                    req_id = prop.get('value')
+                    break
+              
+              # Determine test result
+              if failure is not None:
+                result = "fail"
+              elif error is not None:
+                result = "error"
+              else:
+                result = "pass"
+              
+              # Track requirement coverage
+              if req_id:
+                if req_id not in by_requirement:
+                  by_requirement[req_id] = result
+                elif result == "fail" and by_requirement[req_id] != "fail":
+                  # Fail takes precedence
+                  by_requirement[req_id] = result
+              
               decision = {
                 "oracle": full_name,
                 "evidence": [f"{artifact_base}/junit.xml"]
@@ -179,6 +213,12 @@ jobs:
           except Exception as e:
             print(f"Warning: Could not extract decisions: {e}")
             decisions = [{"oracle": "pytest", "result": "pass", "evidence": [f"{artifact_base}/junit.xml"]}]
+          
+          # Convert by_requirement dict to array format
+          by_requirement_array = [
+            {"id": req_id, "result": result}
+            for req_id, result in by_requirement.items()
+          ]
           
           # Build payload
           payload = {
@@ -203,12 +243,18 @@ jobs:
               "requirement": round(requirement, 3),
               "temporal": round(temporal, 3),
               "interface": round(interface, 3),
-              "risk": round(risk, 3)
+              "risk": round(risk, 3),
+              "by_requirement": by_requirement_array
             },
             "decisions": decisions
           }
           
           pathlib.Path('reports/payload.json').write_text(json.dumps(payload, indent=2))
+          
+          # Debug output
+          print(f"Tracked {len(by_requirement_array)} requirements")
+          for req in by_requirement_array[:5]:  # Show first 5
+            print(f"  {req['id']}: {req['result']}")
           
           # Set outputs
           with open(os.environ['GITHUB_OUTPUT'], 'a') as f:

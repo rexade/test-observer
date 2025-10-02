@@ -30,6 +30,7 @@ Deno.serve(async (req) => {
     const { data, error } = await supabase
       .from('runs')
       .select(`
+        id,
         run_id,
         commit,
         branch,
@@ -57,11 +58,11 @@ Deno.serve(async (req) => {
 
     const projectSlug = (data as any).projects?.slug ?? 'unknown';
     
-    // Fetch module coverage from the view
+    // Fetch module coverage from the view using the integer id
     const { data: moduleCoverage } = await supabase
       .from('public_requirements_coverage')
       .select('*')
-      .eq('run_id', data.run_id);
+      .eq('run_id', data.id);  // Use the integer id, not the string run_id
     
     const response = {
       run: {
